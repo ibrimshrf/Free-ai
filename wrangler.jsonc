@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "free-ai",
+  "main": "./cloudflare/worker.mjs",
+  "compatibility_date": "2026-09-09",
+  "containers": [
+    {
+      "class_name": "FreeAIContainer",
+      "image": "./Dockerfile.cloudflare",
+      "max_instances": 1,
+      "instance_type": "basic"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "FCC_CONTAINER",
+        "class_name": "FreeAIContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["FreeAIContainer"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

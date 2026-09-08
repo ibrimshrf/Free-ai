@@ -16,3 +16,6 @@ llama_cache
 .smoke-results
 /test-results/
 .vscode
+node_modules/
+.wrangler/
+.dev.vars
