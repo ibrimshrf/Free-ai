@@ -1,9 +1,15 @@
-"""Shared local-only security boundary for Admin product surfaces."""
+"""Shared security boundary for Admin product surfaces."""
 
+import hmac
 import ipaddress
+import os
 from urllib.parse import urlsplit
 
 from fastapi import HTTPException, Request
+
+_REMOTE_ADMIN_ENV = "FCC_REMOTE_ADMIN"
+_TRUSTED_PROXY_HEADER = "x-fcc-trusted-proxy"
+_TRUSTED_PROXY_VALUE = "cloudflare"
 
 
 def _is_loopback_host(host: str | None) -> bool:
@@ -55,8 +61,19 @@ def _authority_is_local(authority: str | None) -> bool:
     )
 
 
+def _trusted_remote_admin(request: Request) -> bool:
+    enabled = os.getenv(_REMOTE_ADMIN_ENV, "").strip().lower()
+    if enabled not in {"1", "true", "yes", "on"}:
+        return False
+    marker = request.headers.get(_TRUSTED_PROXY_HEADER)
+    return marker is not None and hmac.compare_digest(marker, _TRUSTED_PROXY_VALUE)
+
+
 def require_loopback_admin(request: Request) -> None:
-    """Allow Admin access only from the local machine."""
+    """Allow local Admin access or an explicitly trusted deployment gateway."""
+
+    if _trusted_remote_admin(request):
+        return
 
     client_host = request.client.host if request.client else None
     if not _is_loopback_host(client_host):
