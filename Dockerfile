@@ -10,7 +10,13 @@ ENV PYTHONUNBUFFERED=1 \
     MESSAGING_PLATFORM=none
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl git ripgrep \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        ripgrep \
+        libatomic1 \
+        libstdc++6 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
@@ -18,7 +24,9 @@ COPY --from=node-runtime /usr/local/bin/npm /usr/local/bin/npm
 COPY --from=node-runtime /usr/local/bin/npx /usr/local/bin/npx
 COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
 
-RUN npm install -g @openai/codex@0.153.4 \
+RUN node --version \
+    && npm --version \
+    && npm install -g @openai/codex@0.153.4 \
     && codex --version
 
 WORKDIR /app
