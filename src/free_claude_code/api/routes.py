@@ -1,8 +1,10 @@
 """FastAPI route handlers."""
 
+import os
 from collections.abc import Mapping
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 from loguru import logger
 
 from free_claude_code.application.errors import ApplicationError
@@ -41,6 +43,10 @@ router = APIRouter()
 
 def _provider_resolver(lease: RequestRuntimeLease) -> ProviderResolver:
     return lambda provider_type: resolve_provider(provider_type, lease=lease)
+
+
+def _railway_remote_admin_enabled() -> bool:
+    return os.getenv("FCC_REMOTE_ADMIN", "").strip().lower() in {"basic", "railway"}
 
 
 async def _create_messages_response(
@@ -179,6 +185,8 @@ async def root(
     settings: Settings = Depends(get_settings),
     _auth=Depends(require_proxy_auth),
 ):
+    if _railway_remote_admin_enabled():
+        return RedirectResponse(url="/admin/code", status_code=307)
     return {
         "status": "ok",
         "provider": parse_provider_type(settings.model),
